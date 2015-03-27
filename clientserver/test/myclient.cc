@@ -1,6 +1,7 @@
 /* myclient.cc: sample client program */
 #include "connection.h"
 #include "connectionclosedexception.h"
+#include "protocol.h"
 
 #include <iostream>
 #include <string>
@@ -8,6 +9,9 @@
 #include <cstdlib>
 
 using namespace std;
+
+unsigned char read_num_p(const Connection& conn);
+string read_string_p(const Connection& conn);
 
 /*
  * Send an integer to the server as four bytes.
@@ -51,15 +55,35 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 	
-	cout << "Type a number: ";
-	int nbr;
-	while (cin >> nbr) {
+	cout << "news> ";
+	string command;
+	while (cin >> command) {
 		try {
-			cout << nbr << " is ...";
+			if (command == "list") {
+				conn.write(Protocol::COM_LIST_NG);
+				conn.write(Protocol::COM_END);
+				
+				conn.read();
+				unsigned length = read_num_p(conn);
+				for (unsigned i = 0; i < length; ++i) {
+					unsigned num_p = read_num_p(conn);
+					string string_p = read_string_p(conn);
+					cout << num_p << ". " << string_p << endl;
+				}
+				conn.read();
+			} else {
+				cout << endl;
+			}
+
+
+			cout << "news> ";
+
+
+			/*cout << nbr << " is ...";
 			writeNumber(conn, nbr);
 			string reply = readString(conn);
 			cout << " " << reply << endl;
-			cout << "Type another number: ";
+			cout << "Type another number: ";*/
 		} catch (ConnectionClosedException&) {
 			cout << " no reply from server. Exiting." << endl;
 			exit(1);
@@ -67,3 +91,19 @@ int main(int argc, char* argv[]) {
 	}
 }
 
+
+unsigned char read_num_p(const Connection& conn) {
+	conn.read();
+	return conn.read();
+}
+
+string read_string_p(const Connection& conn) {
+	conn.read();
+	unsigned N = conn.read();
+	
+	string s;
+	for (unsigned i = 0; i < N; ++i) {
+		s += conn.read();
+	}
+	return s;
+}
