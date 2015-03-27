@@ -3,6 +3,7 @@
 #include "connection.h"
 #include "connectionclosedexception.h"
 #include "protocol.h"
+#include "IMD.h"
 
 #include <memory>
 #include <iostream>
@@ -13,7 +14,7 @@
 
 using namespace std;
 
-void listGroups(const shared_ptr<Connection>& conn);
+void listGroups(const shared_ptr<Connection>& conn, database& db);
 void write_string_p(const shared_ptr<Connection>& conn, string s);
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
 void writeNumber(const shared_ptr<Connection>& conn, int value);
@@ -59,7 +60,11 @@ int main(int argc, char* argv[]){
 		cerr << "Server initialization error." << endl;
 		exit(1);
 	}
-	
+
+	IMD db;
+	db.create_newsgroup("football");
+	db.create_newsgroup("hockey");
+	db.create_newsgroup("baseball");
 
 	while (true) {
 		auto conn = server.waitForActivity();
@@ -69,7 +74,7 @@ int main(int argc, char* argv[]){
 				switch (com) {
 				case Protocol::COM_LIST_NG:
 					conn->read();
-					listGroups(conn);
+					listGroups(conn,db);
 					conn->write(Protocol::ANS_END);
 					break;
 				}
@@ -99,13 +104,10 @@ int main(int argc, char* argv[]){
 	}
 }
 
-void listGroups(const shared_ptr<Connection>& conn) {
+void listGroups(const shared_ptr<Connection>& conn, database& db) {
 	conn->write(Protocol::ANS_LIST_NG);
 	
-	map<unsigned, string> groups;
-	groups.insert({1,"football"});
-	groups.insert({2,"hockey"});
-	
+	auto groups = db.list_newsgroups();
 	write_num_p(conn, groups.size());
 	for (pair<unsigned,string> p : groups) {
 		write_num_p(conn, p.first);
