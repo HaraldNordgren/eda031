@@ -23,6 +23,15 @@ void writeNumber(const Connection& conn, int value) {
 	conn.write(value & 0xFF);
 }
 
+int readNumber(const Connection& conn) {
+	unsigned char byte1 = conn.read();
+	unsigned char byte2 = conn.read();
+	unsigned char byte3 = conn.read();
+	unsigned char byte4 = conn.read();
+	
+	return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
+}
+
 /*
  * Read a string from the server.
  */
@@ -94,12 +103,12 @@ int main(int argc, char* argv[]) {
 
 unsigned char read_num_p(const Connection& conn) {
 	conn.read();
-	return conn.read();
+	return readNumber(conn);
 }
 
 string read_string_p(const Connection& conn) {
 	conn.read();
-	unsigned N = conn.read();
+	unsigned N = readNumber(conn);
 	
 	string s;
 	for (unsigned i = 0; i < N; ++i) {

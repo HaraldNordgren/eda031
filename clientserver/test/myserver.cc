@@ -16,6 +16,7 @@ using namespace std;
 void listGroups(const shared_ptr<Connection>& conn);
 void write_string_p(const shared_ptr<Connection>& conn, string s);
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
+void writeNumber(const shared_ptr<Connection>& conn, int value);
 
 /*
  * Read an integer from a client.
@@ -26,13 +27,6 @@ int readNumber(const shared_ptr<Connection>& conn) {
 	unsigned char byte3 = conn->read();
 	unsigned char byte4 = conn->read();
 	
-	/* 1094861636 means ABCD */
-
-	/*cout << byte1 << "\\ ";
-	cout << byte2 << "\\ ";
-	cout << byte3 << "\\ ";
-	cout << byte4 << endl;*/
-
 	return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
 }
 
@@ -121,7 +115,7 @@ void listGroups(const shared_ptr<Connection>& conn) {
 
 void write_string_p(const shared_ptr<Connection>& conn, string s) {
 	conn->write(Protocol::PAR_STRING);
-	conn->write(s.size());
+	writeNumber(conn, s.size());
 	for (char c : s) {
 		conn->write(c);
 	}
@@ -129,5 +123,12 @@ void write_string_p(const shared_ptr<Connection>& conn, string s) {
 
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c) {
 	conn->write(Protocol::PAR_NUM);
-	conn->write(c);
+	writeNumber(conn, c);
+}
+
+void writeNumber(const shared_ptr<Connection>& conn, int value) {
+	conn->write((value >> 24) & 0xFF);
+	conn->write((value >> 16) & 0xFF);
+	conn->write((value >> 8)  & 0xFF);
+	conn->write(value & 0xFF);
 }
