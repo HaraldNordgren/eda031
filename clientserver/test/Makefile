@@ -25,7 +25,7 @@ all: $(PROGS)
 
 # Targets rely on implicit rules for compiling and linking
 # The dependency on libclientserver.a is not defined.
-myserver: myserver.o IMD.o
+myserver: myserver.o IMD.o disk_database.o
 myclient: myclient.o
 
 # Phony targets

@@ -4,6 +4,7 @@
 #include "connectionclosedexception.h"
 #include "protocol.h"
 #include "IMD.h"
+#include "disk_database.h"
 
 #include <memory>
 #include <iostream>
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	IMD db;
+	disk_database db;
 	db.create_newsgroup("football");
 	db.create_newsgroup("hockey");
 	db.create_newsgroup("baseball");

@@ -3,9 +3,13 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <dirent.h>
 
-class IMD : public database {
+class disk_database : public database {
 public:
+	disk_database();
+
 	std::vector<std::pair<unsigned, std::string>> list_newsgroups();
 	constant create_newsgroup(std::string);
 	constant delete_newsgroup(unsigned);
@@ -15,6 +19,5 @@ public:
 	constant delete_article(unsigned, unsigned);
 	std::pair<constant, article> get_article(unsigned, unsigned);
 private:
-	std::map<unsigned, newsgroup> newsgroups;
-	unsigned counter = 0;
+	std::fstream counter;
 };
