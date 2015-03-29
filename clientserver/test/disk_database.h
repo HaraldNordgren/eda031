@@ -18,6 +18,4 @@ public:
 	constant create_article(unsigned, article);
 	constant delete_article(unsigned, unsigned);
 	std::pair<constant, article> get_article(unsigned, unsigned);
-private:
-	std::fstream counter;
 };

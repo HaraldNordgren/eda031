@@ -67,6 +67,24 @@ int main(int argc, char* argv[]){
 	db.create_newsgroup("hockey");
 	db.create_newsgroup("baseball");
 
+	/*article art1 =  {"Why sports are fun", "harald", "Blabla blabla\nlalalala"};
+	article art2 =  {"Why sports are not fun", "johnny", "Blabla blabla\nlalalala"};
+	article art3 =  {"Why sports might be fun", "jack", "Blabla blabla\nlalalala"};
+
+	db.create_article(2,art1);
+	db.create_article(2,art2);
+	db.create_article(2,art3);
+
+	db.delete_article(2,2);
+
+	vector<pair<unsigned, string>> list = db.list_articles(2).second;
+	for (auto p : list) {
+		cout << p.first << " " << p.second << endl;
+	}
+
+	article art = db.get_article(2,3).second;
+	cout << art.text << endl;*/
+
 	while (true) {
 		auto conn = server.waitForActivity();
 		if (conn != nullptr) {
