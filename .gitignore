@@ -1,2 +1,5 @@
-db/
 *.swp
+*.o
+*.d
+
+clientserver/test/database

@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-class IMD : public database {
+class inmemory_database : public database {
 public:
 	std::vector<std::pair<unsigned, std::string>> list_newsgroups() const;
 	constant create_newsgroup(const std::string);
 	constant delete_newsgroup(const unsigned);
-	std::pair<constant, std::vector<std::pair<unsigned, std::string>>>
+	std::pair<constant, std::map<unsigned, std::string>>
 		list_articles(const unsigned) const;
 	constant create_article(const unsigned, const article);
 	constant delete_article(const unsigned, const unsigned);

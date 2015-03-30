@@ -14,28 +14,32 @@
 
 using namespace std;
 
-static const string ROOT_PATH	= "../../db/";
-static const string COUNTER	= "counter";
-static const string DELIMITER	= ":";
+string DATABASE_ROOT	= "database/";
+const string COUNTER	= "counter";
+const string DELIMITER	= ":";
 
 DIR* open_directory(string);
 void create_counter(string);
 string count(string);
 string read_article(string);
 
-disk_database::disk_database() {
-	DIR* root = opendir(ROOT_PATH.c_str());
+disk_database::disk_database(string database_path) {
+	if (!database_path.empty()) {
+		DATABASE_ROOT = database_path;
+	}
+
+	DIR* root = opendir(DATABASE_ROOT.c_str());
 	if (root != nullptr) {
 		closedir(root);
 		return;
 	}
 
-	mkdir(ROOT_PATH.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-	create_counter(ROOT_PATH);
+	mkdir(DATABASE_ROOT.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	create_counter(DATABASE_ROOT);
 }
 
 vector<pair<unsigned, string>> disk_database::list_newsgroups() const {
-	DIR* root = open_directory(ROOT_PATH);
+	DIR* root = open_directory(DATABASE_ROOT);
 	vector<pair<unsigned, string>> result;
 	struct dirent* folder;
 
@@ -56,7 +60,7 @@ vector<pair<unsigned, string>> disk_database::list_newsgroups() const {
 }
 
 constant disk_database::create_newsgroup(const string name) {
-	DIR* root = open_directory(ROOT_PATH);
+	DIR* root = open_directory(DATABASE_ROOT);
 	struct dirent* folder;
 
 	while ((folder = readdir(root)) != NULL) {
@@ -70,9 +74,9 @@ constant disk_database::create_newsgroup(const string name) {
 
 	closedir(root);
 	
-	const string ID = count(ROOT_PATH);
+	const string ID = count(DATABASE_ROOT);
 	const string FOLDER_NAME = ID + DELIMITER + name;
-	const string NEWSGROUP_PATH = ROOT_PATH + FOLDER_NAME + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + FOLDER_NAME + "/";
 	
 	mkdir(NEWSGROUP_PATH.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 	create_counter(NEWSGROUP_PATH);
@@ -81,7 +85,7 @@ constant disk_database::create_newsgroup(const string name) {
 }
 
 constant disk_database::delete_newsgroup(const unsigned group_id) {
-	DIR* dir = open_directory(ROOT_PATH);
+	DIR* dir = open_directory(DATABASE_ROOT);
 	
 	struct dirent* folder;
 	string folder_name;
@@ -100,7 +104,7 @@ constant disk_database::delete_newsgroup(const unsigned group_id) {
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
 	}
 	
-	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + folder_name + "/";
 	dir = open_directory(NEWSGROUP_PATH);
 	while ((folder = readdir(dir)) != NULL) {
 		const string ARTICLE_PATH = NEWSGROUP_PATH + folder->d_name;
@@ -113,10 +117,10 @@ constant disk_database::delete_newsgroup(const unsigned group_id) {
 	return Protocol::ANS_ACK;
 }
 
-pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(const unsigned group_id) const {
-	vector<pair<unsigned, string>> result;
+pair<constant, map<unsigned, string>> disk_database::list_articles(const unsigned group_id) const {
+	map<unsigned, string> result;
 	
-	DIR* dir = open_directory(ROOT_PATH);
+	DIR* dir = open_directory(DATABASE_ROOT);
 	
 	struct dirent* folder;
 	string folder_name;
@@ -135,7 +139,7 @@ pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(cons
 		return {Protocol::ERR_NG_DOES_NOT_EXIST, result};
 	}
 	
-	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + folder_name + "/";
 	dir = open_directory(NEWSGROUP_PATH);
 	while ((folder = readdir(dir)) != NULL) {
 		string file_name = folder->d_name;
@@ -144,7 +148,7 @@ pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(cons
 		if (pos1 != string::npos && pos2 != string::npos) {
 			string article_id = file_name.substr(0,pos1);
 			string article_title = file_name.substr(pos1+1, pos2-pos1-1);
-			result.push_back({stoi(article_id), article_title});
+			result.insert({stoi(article_id), article_title});
 		}
 	}
 
@@ -155,7 +159,7 @@ pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(cons
 
 
 constant disk_database::create_article(const unsigned group_id, const article art) {
-	DIR* root = open_directory(ROOT_PATH);
+	DIR* root = open_directory(DATABASE_ROOT);
 	
 	struct dirent* folder;
 	string folder_name;
@@ -174,7 +178,7 @@ constant disk_database::create_article(const unsigned group_id, const article ar
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
 	}
 
-	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + folder_name + "/";
 	const string ARTICLE_ID = count(NEWSGROUP_PATH);
 	const string ARTICLE_NAME = ARTICLE_ID + DELIMITER + art.title
 		+ DELIMITER + art.author;
@@ -188,7 +192,7 @@ constant disk_database::create_article(const unsigned group_id, const article ar
 }
 
 constant disk_database::delete_article(const unsigned group_id, const unsigned article_id) {
-	DIR* dir = open_directory(ROOT_PATH);
+	DIR* dir = open_directory(DATABASE_ROOT);
 	
 	struct dirent* file;
 	string folder_name;
@@ -207,7 +211,7 @@ constant disk_database::delete_article(const unsigned group_id, const unsigned a
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
 	}
 	
-	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + folder_name + "/";
 	dir = open_directory(NEWSGROUP_PATH);
 	while ((file = readdir(dir)) != NULL) {
 		string file_name = file->d_name;
@@ -229,7 +233,7 @@ constant disk_database::delete_article(const unsigned group_id, const unsigned a
 }
 
 pair<constant, article> disk_database::get_article(const unsigned group_id, const unsigned article_id) const {
-	DIR* dir = open_directory(ROOT_PATH);
+	DIR* dir = open_directory(DATABASE_ROOT);
 	
 	struct dirent* file;
 	string folder_name;
@@ -249,7 +253,7 @@ pair<constant, article> disk_database::get_article(const unsigned group_id, cons
 		return {Protocol::ERR_NG_DOES_NOT_EXIST, art};
 	}
 	
-	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
+	const string NEWSGROUP_PATH = DATABASE_ROOT + folder_name + "/";
 	dir = open_directory(NEWSGROUP_PATH);
 
 	while ((file = readdir(dir)) != NULL) {

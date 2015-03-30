@@ -3,8 +3,9 @@
 #include "connection.h"
 #include "connectionclosedexception.h"
 #include "protocol.h"
-#include "inmemory_database.h"
 #include "disk_database.h"
+#include "inmemory_database.h"
+#include "database.h"
 
 #include <memory>
 #include <iostream>
@@ -15,10 +16,15 @@
 
 using namespace std;
 
+const string DEFAULT_PATH = "./database/";
+
 void listGroups(const shared_ptr<Connection>& conn, database& db);
 void write_string_p(const shared_ptr<Connection>& conn, string s);
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
 void writeNumber(const shared_ptr<Connection>& conn, int value);
+
+void enter_testdata(database& db);
+void test1(database& db);
 
 /*
  * Read an integer from a client.
@@ -42,9 +48,12 @@ void writeString(const shared_ptr<Connection>& conn, const string& s) {
 	conn->write('$');
 }
 
-int main(int argc, char* argv[]){
-	if (argc != 2) {
-		cerr << "Usage: myserver port-number" << endl;
+int main(int argc, char* argv[]) {
+	if (argc != 2 && argc!= 3) {
+		string long_name = argv[0];
+		auto pos = long_name.rfind("/");
+
+		cerr << "Usage: " << long_name.substr(pos+1) << " port-number [database-path]" << endl;
 		exit(1);
 	}
 	
@@ -52,7 +61,7 @@ int main(int argc, char* argv[]){
 	try {
 		port = stoi(argv[1]);
 	} catch (exception& e) {
-		cerr << "Wrong port number. " << e.what() << endl;
+		cerr << "Wrong port number format " << e.what() << endl;
 		exit(1);
 	}
 	
@@ -62,28 +71,25 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 
-	disk_database db;
-	db.create_newsgroup("football");
-	db.create_newsgroup("hockey");
-	db.create_newsgroup("baseball");
+	string db_path;	
+	if (argc == 3) {
+		db_path = argv[2];
+		if (db_path[db_path.length()-1] != '/') {
+			db_path += "/";
+		}
 
-	/*article art1 =  {"Why sports are fun", "harald", "Blabla blabla\nlalalala"};
-	article art2 =  {"Why sports are not fun", "johnny", "Blabla blabla\nlalalala"};
-	article art3 =  {"Why sports might be fun", "jack", "Blabla blabla\nlalalala"};
-
-	db.create_article(2,art1);
-	db.create_article(2,art2);
-	db.create_article(2,art3);
-
-	db.delete_article(2,2);
-
-	vector<pair<unsigned, string>> list = db.list_articles(2).second;
-	for (auto p : list) {
-		cout << p.first << " " << p.second << endl;
+	} else {
+		db_path = DEFAULT_PATH;
 	}
 
-	article art = db.get_article(2,3).second;
-	cout << art.text << endl;*/
+	disk_database db(db_path);
+	//inmemory_database db;
+	
+	enter_testdata(db);
+	//test1(db);
+
+	
+	cout << "Server running on port " << port << endl << endl;
 
 	while (true) {
 		auto conn = server.waitForActivity();
@@ -152,4 +158,39 @@ void writeNumber(const shared_ptr<Connection>& conn, int value) {
 	conn->write((value >> 16) & 0xFF);
 	conn->write((value >> 8)  & 0xFF);
 	conn->write(value & 0xFF);
+}
+
+void enter_testdata(database& db) {
+	db.create_newsgroup("football");
+	db.create_newsgroup("hockey");
+	db.create_newsgroup("baseball");
+	
+	article art1 =  {"Why sports are fun", "harald", "Sports are fun because\n....."};
+	article art2 =  {"Why sports are not fun", "johnny", "They are not\nfun because"};
+	article art3 =  {"Why sports might be fun", "jack", "It is unknown,\nwhether or not sport are fun"};
+
+	db.create_article(2,art1);
+	db.create_article(2,art2);
+	db.create_article(2,art3);
+
+	db.delete_article(2,2);
+}
+
+void test1(database& db) {
+	auto newsgroup = db.list_newsgroups();
+	for (auto p : newsgroup) {
+		cout << p.first << " " << p.second << endl;
+	}
+
+	cout << endl;
+
+	auto articles = db.list_articles(2).second;
+	for (pair<unsigned,string> p : articles) {
+		cout << p.first << " " << p.second << endl;
+	}
+
+	cout << endl;
+
+	article art = db.get_article(2,3).second;
+	cout << "\"" << art.text << "\"" << endl << endl;
 }
