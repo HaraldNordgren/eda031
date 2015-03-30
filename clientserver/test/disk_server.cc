@@ -6,6 +6,7 @@
 #include "disk_database.h"
 #include "inmemory_database.h"
 #include "database.h"
+#include "messagehandler.h"
 
 #include <memory>
 #include <iostream>
@@ -18,17 +19,19 @@ using namespace std;
 
 const string DEFAULT_PATH = "./database/";
 
+void list_groups(MessageHandler& mh, database& db); /*
 void listGroups(const shared_ptr<Connection>& conn, database& db);
 void write_string_p(const shared_ptr<Connection>& conn, string s);
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
 void writeNumber(const shared_ptr<Connection>& conn, int value);
-
+*/
 void enter_testdata(database& db);
 void test1(database& db);
 
 /*
  * Read an integer from a client.
  */
+ /*
 int readNumber(const shared_ptr<Connection>& conn) {
 	unsigned char byte1 = conn->read();
 	unsigned char byte2 = conn->read();
@@ -37,17 +40,18 @@ int readNumber(const shared_ptr<Connection>& conn) {
 	
 	return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
 }
-
+*/
 /*
  * Send a string to a client.
  */
+ /*
 void writeString(const shared_ptr<Connection>& conn, const string& s) {
 	for (char c : s) {
 		conn->write(c);
 	}
 	conn->write('$');
 }
-
+*/
 int main(int argc, char* argv[]) {
 	if (argc != 2 && argc!= 3) {
 		string long_name = argv[0];
@@ -99,8 +103,12 @@ int main(int argc, char* argv[]) {
 				switch (com) {
 				case Protocol::COM_LIST_NG:
 					conn->read();
+					MessageHandler mh(conn);
+					list_groups(mh,db);
+					/*
 					listGroups(conn,db);
 					conn->write(Protocol::ANS_END);
+					*/
 					break;
 				}
 					
@@ -129,6 +137,19 @@ int main(int argc, char* argv[]) {
 	}
 }
 
+void list_groups(MessageHandler& mh, database& db) {
+	mh.send_code(Protocol::ANS_LIST_NG);
+	
+	auto groups = db.list_newsgroups();
+	mh.send_int_p(groups.size());
+	for (pair<unsigned,string> p : groups) {
+		mh.send_int_p(p.first);
+		mh.send_string_p(p.second);
+	}
+	mh.send_code(Protocol::ANS_END);
+
+}
+/*
 void listGroups(const shared_ptr<Connection>& conn, database& db) {
 	conn->write(Protocol::ANS_LIST_NG);
 	
@@ -159,6 +180,7 @@ void writeNumber(const shared_ptr<Connection>& conn, int value) {
 	conn->write((value >> 8)  & 0xFF);
 	conn->write(value & 0xFF);
 }
+*/
 
 void enter_testdata(database& db) {
 	db.create_newsgroup("football");
