@@ -8,7 +8,7 @@
 
 using namespace std;
 
-vector<pair<unsigned, string>> IMD::list_newsgroups() {
+vector<pair<unsigned, string>> IMD::list_newsgroups() const {
 	vector<pair<unsigned, string>> result;
 	for (auto entry : newsgroups) {
 		result.push_back({entry.first, entry.second.name});
@@ -16,7 +16,7 @@ vector<pair<unsigned, string>> IMD::list_newsgroups() {
 	return result;
 }
 
-constant IMD::create_newsgroup(string name) {
+constant IMD::create_newsgroup(const string name) {
 	auto it = newsgroups.begin();
 	while (it != newsgroups.end() && it->second.name != name) {
 		++it;
@@ -32,7 +32,7 @@ constant IMD::create_newsgroup(string name) {
 	return Protocol::ANS_ACK;
 }
 
-constant IMD::delete_newsgroup(unsigned id) {
+constant IMD::delete_newsgroup(const unsigned id) {
 	auto it = newsgroups.find(id);
 	if (it == newsgroups.end()) {
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
@@ -42,7 +42,7 @@ constant IMD::delete_newsgroup(unsigned id) {
 	return Protocol::ANS_ACK;
 }
 
-pair<constant, vector<pair<unsigned, string>>> IMD::list_articles(unsigned id) {
+pair<constant, vector<pair<unsigned, string>>> IMD::list_articles(const unsigned id) const {
 	vector<pair<unsigned, string>> result;
 	
 	auto it = newsgroups.find(id);
@@ -58,7 +58,7 @@ pair<constant, vector<pair<unsigned, string>>> IMD::list_articles(unsigned id) {
 }
 
 
-constant IMD::create_article(unsigned id, article art) {
+constant IMD::create_article(const unsigned id, const article art) {
 	auto it = newsgroups.find(id);
 	if (it == newsgroups.end()) {
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
@@ -69,7 +69,7 @@ constant IMD::create_article(unsigned id, article art) {
 	return Protocol::ANS_ACK;
 }
 
-constant IMD::delete_article(unsigned group_id, unsigned article_id) {
+constant IMD::delete_article(const unsigned group_id, const unsigned article_id) {
 	auto it_group = newsgroups.find(group_id);
 	if (it_group == newsgroups.end()) {
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
@@ -85,7 +85,7 @@ constant IMD::delete_article(unsigned group_id, unsigned article_id) {
 	return Protocol::ANS_ACK;
 }
 
-pair<constant, article> IMD::get_article(unsigned group_id, unsigned article_id) {
+pair<constant, article> IMD::get_article(const unsigned group_id, const unsigned article_id) const {
 	auto it_group = newsgroups.find(group_id);
 	if (it_group == newsgroups.end()) {
 		article art;

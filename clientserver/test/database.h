@@ -19,14 +19,15 @@ struct newsgroup {
 
 class database {
 public:
-	virtual std::vector<std::pair<unsigned, std::string>> list_newsgroups() = 0;
-	virtual constant create_newsgroup(std::string) = 0;
-	virtual constant delete_newsgroup(unsigned) = 0;
+	virtual std::vector<std::pair<unsigned, std::string>> list_newsgroups() const = 0;
+	virtual constant create_newsgroup(const std::string) = 0;
+	virtual constant delete_newsgroup(const unsigned) = 0;
 	virtual std::pair<constant, std::vector<std::pair<unsigned, std::string>>>
-		list_articles(unsigned) = 0;
-	virtual constant create_article(unsigned, article) = 0;
-	virtual constant delete_article(unsigned, unsigned) = 0;
-	virtual std::pair<constant, article> get_article(unsigned, unsigned) = 0;
+		list_articles(const unsigned) const = 0;
+	virtual constant create_article(const unsigned, const article) = 0;
+	virtual constant delete_article(const unsigned, const unsigned) = 0;
+	virtual std::pair<constant, article>
+		get_article(const unsigned, const unsigned) const = 0;
 };
 
 #endif

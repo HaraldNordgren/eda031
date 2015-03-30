@@ -34,7 +34,7 @@ disk_database::disk_database() {
 	create_counter(ROOT_PATH);
 }
 
-vector<pair<unsigned, string>> disk_database::list_newsgroups() {
+vector<pair<unsigned, string>> disk_database::list_newsgroups() const {
 	DIR* root = open_directory(ROOT_PATH);
 	vector<pair<unsigned, string>> result;
 	struct dirent* folder;
@@ -55,7 +55,7 @@ vector<pair<unsigned, string>> disk_database::list_newsgroups() {
 	return result;
 }
 
-constant disk_database::create_newsgroup(string name) {
+constant disk_database::create_newsgroup(const string name) {
 	DIR* root = open_directory(ROOT_PATH);
 	struct dirent* folder;
 
@@ -80,7 +80,7 @@ constant disk_database::create_newsgroup(string name) {
 	return Protocol::ANS_ACK;
 }
 
-constant disk_database::delete_newsgroup(unsigned group_id) {
+constant disk_database::delete_newsgroup(const unsigned group_id) {
 	DIR* dir = open_directory(ROOT_PATH);
 	
 	struct dirent* folder;
@@ -113,7 +113,7 @@ constant disk_database::delete_newsgroup(unsigned group_id) {
 	return Protocol::ANS_ACK;
 }
 
-pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(unsigned group_id) {
+pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(const unsigned group_id) const {
 	vector<pair<unsigned, string>> result;
 	
 	DIR* dir = open_directory(ROOT_PATH);
@@ -154,7 +154,7 @@ pair<constant, vector<pair<unsigned, string>>> disk_database::list_articles(unsi
 }
 
 
-constant disk_database::create_article(unsigned group_id, article art) {
+constant disk_database::create_article(const unsigned group_id, const article art) {
 	DIR* root = open_directory(ROOT_PATH);
 	
 	struct dirent* folder;
@@ -187,7 +187,7 @@ constant disk_database::create_article(unsigned group_id, article art) {
 	return Protocol::ANS_ACK;
 }
 
-constant disk_database::delete_article(unsigned group_id, unsigned article_id) {
+constant disk_database::delete_article(const unsigned group_id, const unsigned article_id) {
 	DIR* dir = open_directory(ROOT_PATH);
 	
 	struct dirent* file;
@@ -228,7 +228,7 @@ constant disk_database::delete_article(unsigned group_id, unsigned article_id) {
 	return Protocol::ERR_ART_DOES_NOT_EXIST;
 }
 
-pair<constant, article> disk_database::get_article(unsigned group_id, unsigned article_id) {
+pair<constant, article> disk_database::get_article(const unsigned group_id, const unsigned article_id) const {
 	DIR* dir = open_directory(ROOT_PATH);
 	
 	struct dirent* file;
@@ -251,11 +251,13 @@ pair<constant, article> disk_database::get_article(unsigned group_id, unsigned a
 	
 	const string NEWSGROUP_PATH = ROOT_PATH + folder_name + "/";
 	dir = open_directory(NEWSGROUP_PATH);
+
 	while ((file = readdir(dir)) != NULL) {
 		string file_name = file->d_name;
 		auto pos1 = file_name.find(DELIMITER);
-		if (pos1 != string::npos) {
-			string id = file_name.substr(0,pos1);
+
+		if (pos1 != string::npos) {	
+			string id = file_name.substr(0, pos1);
 			if (id == to_string(article_id)) {
 				closedir(dir);
 
@@ -278,7 +280,7 @@ pair<constant, article> disk_database::get_article(unsigned group_id, unsigned a
 	return {Protocol::ANS_ACK, art};
 }
 
-DIR* open_directory(string path) {
+DIR* open_directory(const string path) {
 	DIR* dir = opendir(path.c_str());
 	if (dir == nullptr) {
 		cerr << "Could not open " << path << endl;
@@ -288,14 +290,14 @@ DIR* open_directory(string path) {
 	return dir;
 }
 
-void create_counter(string path) {
+void create_counter(const string path) {
 	fstream counter;
 	counter.open(path + COUNTER, fstream::out | fstream::trunc);
 	counter << "0";
 	counter.close();
 }
 
-string count(string path) {
+string count(const string path) {
 	fstream counter;
 	counter.open(path + COUNTER);
 
@@ -310,7 +312,7 @@ string count(string path) {
 	return to_string(nbr);
 }
 
-string read_article(string path) {
+string read_article(const string path) {
 	ifstream infile(path);
 	
 	string result, tmp;
@@ -318,6 +320,7 @@ string read_article(string path) {
 		result += tmp;
 		result += '\n';
 	}
+
 	result.resize(result.length()-1);
 	return result;
 }
