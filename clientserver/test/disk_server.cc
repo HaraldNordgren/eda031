@@ -17,9 +17,19 @@
 
 using namespace std;
 
+
+
 const string DEFAULT_PATH = "./database/";
 
-void list_groups(MessageHandler& mh, database& db); /*
+const bool debug_messages = true;	// Fult jag vet, ta gärna bort om det stör.
+void debug_msg(const string msg);	// -||-
+
+void list_groups(MessageHandler& mh, database& db);
+void create_newsgroup(MessageHandler& mh, database& db);
+void delete_newsgroup(MessageHandler& mh, database& db);
+void list_articles(MessageHandler& mh, database& db);
+void create_article(MessageHandler& mh, database& db);
+ /*
 void listGroups(const shared_ptr<Connection>& conn, database& db);
 void write_string_p(const shared_ptr<Connection>& conn, string s);
 void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
@@ -28,30 +38,7 @@ void writeNumber(const shared_ptr<Connection>& conn, int value);
 void enter_testdata(database& db);
 void test1(database& db);
 
-/*
- * Read an integer from a client.
- */
- /*
-int readNumber(const shared_ptr<Connection>& conn) {
-	unsigned char byte1 = conn->read();
-	unsigned char byte2 = conn->read();
-	unsigned char byte3 = conn->read();
-	unsigned char byte4 = conn->read();
-	
-	return (byte1 << 24) | (byte2 << 16) | (byte3 << 8) | byte4;
-}
-*/
-/*
- * Send a string to a client.
- */
- /*
-void writeString(const shared_ptr<Connection>& conn, const string& s) {
-	for (char c : s) {
-		conn->write(c);
-	}
-	conn->write('$');
-}
-*/
+
 int main(int argc, char* argv[]) {
 	if (argc != 2 && argc!= 3) {
 		string long_name = argv[0];
@@ -86,10 +73,10 @@ int main(int argc, char* argv[]) {
 		db_path = DEFAULT_PATH;
 	}
 
-	disk_database db(db_path);
-	//inmemory_database db;
+	//disk_database db(db_path);
+	inmemory_database db;
 	
-	enter_testdata(db);
+	//enter_testdata(db);
 	//test1(db);
 
 	
@@ -100,31 +87,50 @@ int main(int argc, char* argv[]) {
 		if (conn != nullptr) {
 			try {
 				unsigned char com = conn->read();
+				MessageHandler mh(conn);
+				
 				switch (com) {
-				case Protocol::COM_LIST_NG:
-					conn->read();
-					MessageHandler mh(conn);
-					list_groups(mh,db);
-					/*
-					listGroups(conn,db);
-					conn->write(Protocol::ANS_END);
-					*/
-					break;
-				}
+					case Protocol::COM_LIST_NG:					
+						conn->read();			
+						debug_msg("COM_LIST_NG");		
+						list_groups(mh, db);
+						debug_msg("-> exit case");
+						break;
+				
+					case Protocol::COM_CREATE_NG:
+						debug_msg("COM_CREATE_NG");
+						create_newsgroup(mh, db);
+						debug_msg("-> exit case");
+						break;
 					
-
-
-
-				/*int nbr = readNumber(conn);
-				string result;
-				if (nbr > 0) {
-					result = "positive";
-				} else if (nbr == 0) {
-					result = "zero";
-				} else {
-					result = "negative";
+					case Protocol::COM_DELETE_NG:	
+						debug_msg("COM_DELETE_NG; ");			
+						delete_newsgroup(mh, db);
+						debug_msg("-> exit case");
+						break;
+						
+					case Protocol::COM_LIST_ART:
+						debug_msg("COM_LIST_ART");
+						list_articles(mh, db);
+						debug_msg("-> exit case");
+						break;
+						
+					case Protocol::COM_CREATE_ART:
+						debug_msg("COM_CREATE_ART");
+						create_article(mh, db);
+						debug_msg("exit case");
+						break;
+						
+					case Protocol::COM_DELETE_ART:
+						debug_msg("COM_DELETE_ART");
+						break;
+						
+					case Protocol::COM_GET_ART:
+						debug_msg("COM_GET_ART");
+						break;
 				}
-				writeString(conn, result);*/
+
+
 			} catch (ConnectionClosedException&) {
 				server.deregisterConnection(conn);
 				cout << "Client closed connection" << endl;
@@ -134,6 +140,12 @@ int main(int argc, char* argv[]) {
 			server.registerConnection(conn);
 			cout << "New client connects" << endl;
 		}
+	}
+}
+
+void debug_msg(const string msg) {
+	if (debug_messages) {
+		cout << msg << endl;
 	}
 }
 
@@ -147,8 +159,93 @@ void list_groups(MessageHandler& mh, database& db) {
 		mh.send_string_p(p.second);
 	}
 	mh.send_code(Protocol::ANS_END);
-
 }
+
+void create_newsgroup(MessageHandler& mh, database& db) {
+	string name = mh.recv_string_p();
+	unsigned char com = mh.recv_code();
+	if (com != Protocol::COM_END) {
+		/* do stuff? */
+	}	
+	unsigned char ans = db.create_newsgroup(name);	
+	mh.send_code(Protocol::ANS_CREATE_NG);
+	mh.send_code(ans);
+	if (ans==Protocol::ANS_NAK)
+		mh.send_code(Protocol::ERR_NG_ALREADY_EXISTS);	
+	mh.send_code(Protocol::ANS_END);	
+}
+
+void delete_newsgroup(MessageHandler& mh, database& db) {
+	unsigned id = mh.recv_int_p();
+	debug_msg("id = " +to_string(id));	
+	unsigned char com = mh.recv_code();
+	
+	if (com != Protocol::COM_END) {
+		/* do stuff? */
+	}
+	unsigned char ans = db.delete_newsgroup(id);
+	debug_msg("database ans = " +to_string(ans));
+	mh.send_code(Protocol::ANS_DELETE_NG);
+	mh.send_code(ans);
+	if (ans==Protocol::ANS_NAK)
+		mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);	
+	mh.send_code(Protocol::ANS_END);
+}
+
+void list_articles(MessageHandler& mh, database& db) {
+	unsigned id = mh.recv_int_p();
+	unsigned char com = mh.recv_code();	
+	if (com != Protocol::COM_END) {
+		/* do stuff? */
+	}
+	auto ans = db.list_articles(id);
+	mh.send_code(ans.first);
+	if (ans.first==Protocol::ANS_ACK) {
+		//debug_msg("ANS_ACK");
+		unsigned n = ans.second.size();
+		//debug_msg("n = "+to_string(n));
+		mh.send_int_p(n);
+		for (auto p : ans.second) {
+			//debug_msg("article");
+			mh.send_int_p(p.first);
+			mh.send_string_p(p.second);
+		}
+	} else {
+		debug_msg("ANS_NAK");
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);
+	}
+	mh.send_code(Protocol::ANS_END);
+	debug_msg("ANS_END");
+}
+
+void create_article(MessageHandler& mh, database& db) {
+	unsigned id = mh.recv_int_p();
+	article art;
+	art.title = mh.recv_string_p();
+	art.author = mh.recv_string_p();
+	art.text = mh.recv_string_p();
+	unsigned char com = mh.recv_code();	
+	if (com != Protocol::COM_END) {
+		/* do stuff? */
+	}
+	unsigned char ans = db.create_article(id, art);	
+	if (ans == Protocol::ANS_ACK) {
+		mh.send_code(ans);
+		mh.send_code(Protocol::ANS_END);
+	} else {
+		if (ans == Protocol::ANS_NAK) {
+			mh.send_code(ans);
+			mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);
+			mh.send_code(Protocol::ANS_END);
+		} else {
+			/* throw connection or smt */
+		}
+	}
+		
+	
+}
+
 /*
 void listGroups(const shared_ptr<Connection>& conn, database& db) {
 	conn->write(Protocol::ANS_LIST_NG);
