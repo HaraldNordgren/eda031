@@ -57,7 +57,8 @@ int main(int argc, char* argv[]) {
 		string long_name = argv[0];
 		auto pos = long_name.rfind("/");
 
-		cerr << "Usage: " << long_name.substr(pos+1) << " port-number [database-path]" << endl;
+		cerr << "Usage: " << long_name.substr(pos+1) <<
+			" port-number [database-path]" << endl;
 		exit(1);
 	}
 	

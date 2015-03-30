@@ -3,3 +3,6 @@
 *.d
 
 clientserver/test/database
+
+clientserver/test/disk_server
+clientserver/test/myclient
