@@ -29,12 +29,9 @@ void create_newsgroup(MessageHandler& mh, database& db);
 void delete_newsgroup(MessageHandler& mh, database& db);
 void list_articles(MessageHandler& mh, database& db);
 void create_article(MessageHandler& mh, database& db);
- /*
-void listGroups(const shared_ptr<Connection>& conn, database& db);
-void write_string_p(const shared_ptr<Connection>& conn, string s);
-void write_num_p(const shared_ptr<Connection>& conn, unsigned char c);
-void writeNumber(const shared_ptr<Connection>& conn, int value);
-*/
+void delete_article(MessageHandler& mh, database& db);
+void get_article(MessageHandler& mh, database& db);
+
 void enter_testdata(database& db);
 void test1(database& db);
 
@@ -92,42 +89,45 @@ int main(int argc, char* argv[]) {
 				
 				switch (com) {
 					case Protocol::COM_LIST_NG:					
-						conn->read();			
 						debug_msg("COM_LIST_NG");		
 						list_groups(mh, db);
-						debug_msg("-> exit case");
+						//debug_msg("-> exit case");
 						break;
 				
 					case Protocol::COM_CREATE_NG:
 						debug_msg("COM_CREATE_NG");
 						create_newsgroup(mh, db);
-						debug_msg("-> exit case");
+						//debug_msg("-> exit case");
 						break;
 					
 					case Protocol::COM_DELETE_NG:	
 						debug_msg("COM_DELETE_NG; ");			
 						delete_newsgroup(mh, db);
-						debug_msg("-> exit case");
+						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_LIST_ART:
 						debug_msg("COM_LIST_ART");
 						list_articles(mh, db);
-						debug_msg("-> exit case");
+						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_CREATE_ART:
 						debug_msg("COM_CREATE_ART");
 						create_article(mh, db);
-						debug_msg("exit case");
+						//debug_msg("exit case");
 						break;
 						
 					case Protocol::COM_DELETE_ART:
 						debug_msg("COM_DELETE_ART");
+						delete_article(mh, db);
+						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_GET_ART:
 						debug_msg("COM_GET_ART");
+						get_article(mh, db);
+						//debug_msg("-> exit case");
 						break;
 				}
 
@@ -151,8 +151,11 @@ void debug_msg(const string msg) {
 }
 
 void list_groups(MessageHandler& mh, database& db) {
-	mh.send_code(Protocol::ANS_LIST_NG);
-	
+	unsigned char com = mh.recv_code();
+	if (com != Protocol::COM_END) {
+		debug_msg("Connection should be thrown now");
+	}
+	mh.send_code(Protocol::ANS_LIST_NG);	
 	auto groups = db.list_newsgroups();
 	mh.send_int_p(groups.size());
 	for (pair<unsigned,string> p : groups) {
@@ -166,13 +169,19 @@ void create_newsgroup(MessageHandler& mh, database& db) {
 	string name = mh.recv_string_p();
 	unsigned char com = mh.recv_code();
 	if (com != Protocol::COM_END) {
-		/* do stuff? */
+		debug_msg("Connection should be thrown now");
 	}	
 	unsigned char ans = db.create_newsgroup(name);	
 	mh.send_code(Protocol::ANS_CREATE_NG);
-	mh.send_code(ans);
-	if (ans==Protocol::ANS_NAK)
-		mh.send_code(Protocol::ERR_NG_ALREADY_EXISTS);	
+	
+	if (ans==Protocol::ANS_ACK)
+		mh.send_code(ans);
+	else if (ans==Protocol::ERR_NG_ALREADY_EXISTS) {
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans);
+	} else {
+		debug_msg("Connection should be thrown now");
+	}	
 	mh.send_code(Protocol::ANS_END);	
 }
 
@@ -182,14 +191,18 @@ void delete_newsgroup(MessageHandler& mh, database& db) {
 	unsigned char com = mh.recv_code();
 	
 	if (com != Protocol::COM_END) {
-		/* do stuff? */
+		debug_msg("Connection should be thrown now");
 	}
 	unsigned char ans = db.delete_newsgroup(id);
-	debug_msg("database ans = " +to_string(ans));
 	mh.send_code(Protocol::ANS_DELETE_NG);
-	mh.send_code(ans);
-	if (ans==Protocol::ANS_NAK)
-		mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);	
+	if (ans==Protocol::ANS_ACK)
+		mh.send_code(ans);
+	else if (ans==Protocol::ERR_NG_DOES_NOT_EXIST) {
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans);
+	} else {
+		debug_msg("Connection should be thrown now");
+	}	
 	mh.send_code(Protocol::ANS_END);
 }
 
@@ -197,27 +210,25 @@ void list_articles(MessageHandler& mh, database& db) {
 	unsigned id = mh.recv_int_p();
 	unsigned char com = mh.recv_code();	
 	if (com != Protocol::COM_END) {
-		/* do stuff? */
+		debug_msg("Connection should be thrown now");
 	}
 	auto ans = db.list_articles(id);
-	mh.send_code(ans.first);
-	if (ans.first==Protocol::ANS_ACK) {
-		//debug_msg("ANS_ACK");
+	mh.send_code(Protocol::ANS_LIST_ART);
+	if (ans.first==Protocol::ANS_ACK) {	
+		mh.send_code(ans.first);
 		unsigned n = ans.second.size();
-		//debug_msg("n = "+to_string(n));
 		mh.send_int_p(n);
 		for (auto p : ans.second) {
-			//debug_msg("article");
 			mh.send_int_p(p.first);
 			mh.send_string_p(p.second);
 		}
-	} else {
-		debug_msg("ANS_NAK");
+	} else if (ans.first==Protocol::ERR_NG_DOES_NOT_EXIST) {
 		mh.send_code(Protocol::ANS_NAK);
-		mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);
+		mh.send_code(ans.first);
+	} else {
+		debug_msg("Connection should be thrown now");
 	}
 	mh.send_code(Protocol::ANS_END);
-	debug_msg("ANS_END");
 }
 
 void create_article(MessageHandler& mh, database& db) {
@@ -228,24 +239,64 @@ void create_article(MessageHandler& mh, database& db) {
 	art.text = mh.recv_string_p();
 	unsigned char com = mh.recv_code();	
 	if (com != Protocol::COM_END) {
-		/* do stuff? */
+		debug_msg("Connection should be thrown now");
 	}
 	unsigned char ans = db.create_article(id, art);	
+	mh.send_code(Protocol::ANS_CREATE_ART);
 	if (ans == Protocol::ANS_ACK) {
 		mh.send_code(ans);
-		mh.send_code(Protocol::ANS_END);
+	} else if (ans == Protocol::ERR_NG_DOES_NOT_EXIST) {
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans);
 	} else {
-		if (ans == Protocol::ANS_NAK) {
-			mh.send_code(ans);
-			mh.send_code(Protocol::ERR_NG_DOES_NOT_EXIST);
-			mh.send_code(Protocol::ANS_END);
-		} else {
-			/* throw connection or smt */
-		}
-	}
-		
-	
+		debug_msg("Connection should be thrown now");
+	}	
+	mh.send_code(Protocol::ANS_END);
 }
+
+void delete_article(MessageHandler& mh, database& db) {
+	unsigned grp_id = mh.recv_int_p();
+	unsigned art_id = mh.recv_int_p();
+	unsigned char com = mh.recv_code();	
+	if (com != Protocol::COM_END) {
+		debug_msg("Connection should be thrown now");
+	}
+	unsigned char ans = db.delete_article(grp_id, art_id);
+	mh.send_code(Protocol::ANS_DELETE_ART);
+	if (ans == Protocol::ANS_ACK) 
+		mh.send_code(ans);
+	else if (ans==Protocol::ERR_NG_DOES_NOT_EXIST || ans==Protocol::ERR_ART_DOES_NOT_EXIST) {			
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans);
+	} else {
+		debug_msg("Connection should be thrown now");
+	}
+	mh.send_code(Protocol::ANS_END);	
+}
+
+void get_article(MessageHandler& mh, database& db) {
+	unsigned grp_id = mh.recv_int_p();
+	unsigned art_id = mh.recv_int_p();
+	unsigned char com = mh.recv_code();	
+	if (com != Protocol::COM_END) {
+		debug_msg("Connection should be thrown now");
+	}
+	auto ans = db.get_article(grp_id, art_id);
+	mh.send_code(Protocol::ANS_GET_ART);
+	if (ans.first == Protocol::ANS_ACK) {
+		mh.send_code(ans.first);
+		mh.send_string_p(ans.second.title);
+		mh.send_string_p(ans.second.author);
+		mh.send_string_p(ans.second.text);
+	} else if (ans.first==Protocol::ERR_NG_DOES_NOT_EXIST || ans.first==Protocol::ERR_ART_DOES_NOT_EXIST) {
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans.first);
+	} else {
+		debug_msg("Connection should be thrown now");
+	}
+	mh.send_code(Protocol::ANS_END);	
+}
+
 
 /*
 void listGroups(const shared_ptr<Connection>& conn, database& db) {

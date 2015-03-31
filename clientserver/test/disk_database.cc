@@ -281,7 +281,7 @@ pair<constant, article> disk_database::get_article(const unsigned group_id, cons
 	closedir(dir);
 	
 	article art;
-	return {Protocol::ANS_ACK, art};
+	return {Protocol::ERR_ART_DOES_NOT_EXIST, art};  // Ändrade från ans_ack till err_art_does_not_exist.  Om jag tolkat rätt var det ett typo.
 }
 
 DIR* open_directory(const string path) {
