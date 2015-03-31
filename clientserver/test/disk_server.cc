@@ -32,6 +32,7 @@ void create_article(MessageHandler& mh, database& db);
 void delete_article(MessageHandler& mh, database& db);
 void get_article(MessageHandler& mh, database& db);
 
+void test_inmemory_db(database& db);
 void enter_testdata(database& db);
 void test1(database& db);
 
@@ -73,6 +74,7 @@ int main(int argc, char* argv[]) {
 
 	//disk_database db(db_path);
 	inmemory_database db;
+	test_inmemory_db(db);
 	
 	//enter_testdata(db);
 	//test1(db);
@@ -261,17 +263,17 @@ void delete_article(MessageHandler& mh, database& db) {
 	if (com != Protocol::COM_END) {
 		debug_msg("Connection should be thrown now");
 	}
-	unsigned char ans = db.delete_article(grp_id, art_id);
+	unsigned char ans = db.delete_article(grp_id, art_id);											debug_msg("db.delete_article("+to_string(grp_id)+","+to_string(art_id)+")");
 	mh.send_code(Protocol::ANS_DELETE_ART);
-	if (ans == Protocol::ANS_ACK) 
-		mh.send_code(ans);
-	else if (ans==Protocol::ERR_NG_DOES_NOT_EXIST || ans==Protocol::ERR_ART_DOES_NOT_EXIST) {			
-		mh.send_code(Protocol::ANS_NAK);
-		mh.send_code(ans);
+	if (ans == Protocol::ANS_ACK) {
+		mh.send_code(ans);																			debug_msg("ANS_ACK");				
+	} else if (	ans==Protocol::ERR_NG_DOES_NOT_EXIST || ans==Protocol::ERR_ART_DOES_NOT_EXIST) {			
+		mh.send_code(Protocol::ANS_NAK);															debug_msg("ANS_NAK");
+		mh.send_code(ans);																			debug_msg("code = "+to_string(ans));
 	} else {
 		debug_msg("Connection should be thrown now");
 	}
-	mh.send_code(Protocol::ANS_END);	
+	mh.send_code(Protocol::ANS_END);																debug_msg("ANS_END");
 }
 
 void get_article(MessageHandler& mh, database& db) {
@@ -298,38 +300,38 @@ void get_article(MessageHandler& mh, database& db) {
 }
 
 
-/*
-void listGroups(const shared_ptr<Connection>& conn, database& db) {
-	conn->write(Protocol::ANS_LIST_NG);
+/* debugging */
+void test_inmemory_db(database& db) {
+
+	/* add newsgroup */
+	db.create_newsgroup(string("testgroup1"));
+	article art1;
+	art1.title = string("test title 1,1");
+	art1.author = string("test author 1,1");
+	art1.text = string("While this is a text, it is also not a text.");
 	
-	auto groups = db.list_newsgroups();
-	write_num_p(conn, groups.size());
-	for (pair<unsigned,string> p : groups) {
-		write_num_p(conn, p.first);
-		write_string_p(conn, p.second);
+	/* add article to newsgroup*/
+	db.create_article(1,art1);	
+	
+	unsigned grp_id = 1;	unsigned art_id = 1;
+	
+	/* check if it's there, if the indices are correct */
+	auto p1 = db.list_articles(grp_id);
+	for (auto m : p1.second) {
+		cout << "Article: grp_id, art_id = " << grp_id << ", " << m.first << "; title = "<< m.second << endl;
 	}
-}
+	
+	/* delete article from newsgroup */
+	cout << "db.delete_article(" << grp_id << "," << art_id << ")" << endl;	
+	db.delete_article(grp_id,art_id);
+	
+	/* check if the article is still there */
+	auto p2 = db.list_articles(grp_id);
+	for (auto m : p2.second) {
+		cout << "Article: grp_id, art_id = " << grp_id << ", " << m.first << "; title = "<< m.second << endl;
+	}		
 
-void write_string_p(const shared_ptr<Connection>& conn, string s) {
-	conn->write(Protocol::PAR_STRING);
-	writeNumber(conn, s.size());
-	for (char c : s) {
-		conn->write(c);
-	}
 }
-
-void write_num_p(const shared_ptr<Connection>& conn, unsigned char c) {
-	conn->write(Protocol::PAR_NUM);
-	writeNumber(conn, c);
-}
-
-void writeNumber(const shared_ptr<Connection>& conn, int value) {
-	conn->write((value >> 24) & 0xFF);
-	conn->write((value >> 16) & 0xFF);
-	conn->write((value >> 8)  & 0xFF);
-	conn->write(value & 0xFF);
-}
-*/
 
 void enter_testdata(database& db) {
 	db.create_newsgroup("football");
