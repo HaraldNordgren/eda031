@@ -76,7 +76,7 @@ constant inmemory_database::delete_article(const unsigned group_id, const unsign
 		return Protocol::ERR_NG_DOES_NOT_EXIST;
 	}
 	
-	auto articles = it_group->second.articles;
+	auto& articles = it_group->second.articles;
 	auto it_articles = articles.find(article_id);
 	if (it_articles == articles.end()) {
 		return Protocol::ERR_ART_DOES_NOT_EXIST;
