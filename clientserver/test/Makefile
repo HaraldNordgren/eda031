@@ -1,8 +1,8 @@
 # Define the compiler and the linker. The linker must be defined since
 # the implicit rule for linking uses CC as the linker. g++ can be
 # changed to clang++.
-CXX = clang++-3.5
-CC  = clang++-3.5
+CXX = clang++
+CC  = clang++
 
 # Define preprocessor, compiler, and linker flags. Uncomment the # lines
 # if you use clang++ and wish to use libc++ instead of libstd++.
@@ -19,15 +19,14 @@ LDFLAGS   = -g -L..
 LDLIBS = -lclientserver
 
 # Targets
-PROGS = myclient disk_server
+PROGS = disk_server test_client
 
 all: $(PROGS)
 
 # Targets rely on implicit rules for compiling and linking
 # The dependency on libclientserver.a is not defined.
-myclient:	myclient.o
 disk_server:	disk_server.o disk_database.o inmemory_database.o messagehandler.o
-
+test_client:	test_client.o messagehandler.o
 # Phony targets
 .PHONY: all clean
 

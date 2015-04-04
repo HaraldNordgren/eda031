@@ -74,9 +74,9 @@ int main(int argc, char* argv[]) {
 
 	//disk_database db(db_path);
 	inmemory_database db;
-	test_inmemory_db(db);
+	//test_inmemory_db(db);
 	
-	//enter_testdata(db);
+	enter_testdata(db);
 	//test1(db);
 
 	
@@ -93,43 +93,36 @@ int main(int argc, char* argv[]) {
 					case Protocol::COM_LIST_NG:					
 						debug_msg("COM_LIST_NG");		
 						list_groups(mh, db);
-						//debug_msg("-> exit case");
 						break;
 				
 					case Protocol::COM_CREATE_NG:
 						debug_msg("COM_CREATE_NG");
 						create_newsgroup(mh, db);
-						//debug_msg("-> exit case");
 						break;
 					
 					case Protocol::COM_DELETE_NG:	
 						debug_msg("COM_DELETE_NG; ");			
 						delete_newsgroup(mh, db);
-						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_LIST_ART:
 						debug_msg("COM_LIST_ART");
 						list_articles(mh, db);
-						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_CREATE_ART:
 						debug_msg("COM_CREATE_ART");
 						create_article(mh, db);
-						//debug_msg("exit case");
 						break;
 						
 					case Protocol::COM_DELETE_ART:
 						debug_msg("COM_DELETE_ART");
 						delete_article(mh, db);
-						//debug_msg("-> exit case");
 						break;
 						
 					case Protocol::COM_GET_ART:
 						debug_msg("COM_GET_ART");
 						get_article(mh, db);
-						//debug_msg("-> exit case");
 						break;
 				}
 
@@ -263,17 +256,17 @@ void delete_article(MessageHandler& mh, database& db) {
 	if (com != Protocol::COM_END) {
 		debug_msg("Connection should be thrown now");
 	}
-	unsigned char ans = db.delete_article(grp_id, art_id);											debug_msg("db.delete_article("+to_string(grp_id)+","+to_string(art_id)+")");
+	unsigned char ans = db.delete_article(grp_id, art_id);
 	mh.send_code(Protocol::ANS_DELETE_ART);
 	if (ans == Protocol::ANS_ACK) {
-		mh.send_code(ans);																			debug_msg("ANS_ACK");				
-	} else if (	ans==Protocol::ERR_NG_DOES_NOT_EXIST || ans==Protocol::ERR_ART_DOES_NOT_EXIST) {			
-		mh.send_code(Protocol::ANS_NAK);															debug_msg("ANS_NAK");
-		mh.send_code(ans);																			debug_msg("code = "+to_string(ans));
+		mh.send_code(ans);
+	} else if (	ans==Protocol::ERR_NG_DOES_NOT_EXIST || ans==Protocol::ERR_ART_DOES_NOT_EXIST) {
+		mh.send_code(Protocol::ANS_NAK);
+		mh.send_code(ans);
 	} else {
 		debug_msg("Connection should be thrown now");
 	}
-	mh.send_code(Protocol::ANS_END);																debug_msg("ANS_END");
+	mh.send_code(Protocol::ANS_END);
 }
 
 void get_article(MessageHandler& mh, database& db) {
