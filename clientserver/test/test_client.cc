@@ -29,6 +29,7 @@ unsigned char deleteNewsgroup(MessageHandler& mh, const unsigned id);
 pair<unsigned char, vector<pair<unsigned, string>>> listArticles(MessageHandler& mh, const unsigned id);
 unsigned char createArticle(MessageHandler& mh, const article art);
 unsigned char deleteArticle(MessageHandler& mh, const unsigned grp_id, const unsigned art_id);
+pair<unsigned char, article> getArticle(MessageHandler& mh, const unsigned grp_id, const unsigned art_id);
 
 /* utility functions */
 pair<string, string> parse_cmdline(string line);
@@ -41,6 +42,7 @@ void console_delete_newsgroup(MessageHandler& mh, state& s, const string& input)
 void console_list_articles(MessageHandler& mh, state& s, const unsigned id);
 void console_create_article(MessageHandler& mh, state& s);
 void console_delete_article(MessageHandler& mh, state& s);
+void console_get_article(MessageHandler& mh, state& s, const string& input);
 void update_console(MessageHandler& mh, const string& command, const string& input, state& s);
 
 
@@ -69,7 +71,6 @@ int main(int argc, char* argv[]) {
 	
 	string s;
 	state console_state;
-	unsigned current_group = 0;
 	auto temp =  shared_ptr<Connection>(&conn);		/* Detta går nog göra bättre. 	*/
 	MessageHandler mh(temp);						/* Funkar dock (hittils).		*/ 
 	
@@ -229,6 +230,34 @@ unsigned char deleteArticle(MessageHandler& mh, const unsigned grp_id, const uns
 	code = mh.recv_code();
 	return retval;
 }
+
+pair<unsigned char, article> getArticle(MessageHandler& mh, const unsigned grp_id, const unsigned art_id) {
+	mh.send_code(Protocol::COM_GET_ART);
+	mh.send_int_p(grp_id);
+	mh.send_int_p(art_id);
+	mh.send_code(Protocol::COM_END);
+	
+	unsigned char code = mh.recv_code();
+	if (code != Protocol::ANS_GET_ART) {
+		/* error */
+	}
+	code = mh.recv_code();
+	pair<unsigned char, article> retval;
+	
+	if (code == Protocol::ANS_ACK) {
+		retval.first = code;
+		retval.second.title = mh.recv_string_p();
+		retval.second.author = mh.recv_string_p();
+		retval.second.text = mh.recv_string_p();
+	} else if (code == Protocol::ANS_NAK) {
+		code = mh.recv_code();
+		retval.first = code;
+	} else {
+		/* error */
+	}
+	code = mh.recv_code();
+	return retval;
+}
 	
 /* ------------------------------- UTILITY FUNCTIONS ------------------------------- */
 
@@ -366,6 +395,9 @@ void console_create_article(MessageHandler& mh, state& s) {
 	}
 	/* send article to database */
 	unsigned char code = createArticle(mh, s.current_group, art);	
+	if (code == Protocol::ERR_NG_DOES_NOT_EXIST) {
+		cout <<"<newsgroup does not exist>" << endl; /* should never happen */
+	}
 }
 
 void console_delete_article(MessageHandler& mh, state& s) {
@@ -399,6 +431,38 @@ void console_delete_article(MessageHandler& mh, state& s) {
 	}	
 }
 
+void console_get_article(MessageHandler& mh, state& s, const string& input) {
+	/* any group selected? */
+	if (s.current_group == 0) {
+		cout << "<Select a newsgroup first>" << endl;
+		return;
+	}
+	/* input = string or int? */
+	unsigned id;
+	if (isnumber(input)) {
+		id = stoi(input);
+	} else {
+		auto it = s.article_nametoindex.find(input);
+		if (it==s.article_nametoindex.end()) {
+			cout << "<no such article>" << endl;
+			return;
+		}
+		id = s.article_nametoindex.at(input);
+	}
+	
+	auto p = getArticle(mh, s.current_group, id);
+	
+	if (p.first == Protocol::ERR_NG_DOES_NOT_EXIST) {
+		cout << "<newsgroup does not exist>" << endl;	/* should never occur */
+	} else if (p.first == Protocol::ERR_ART_DOES_NOT_EXIST) {
+		cout << "<no such article>" << endl;
+	} else {
+		cout << p.second.title << "    From: " << p.second.author << endl;
+		cout << p.second.text << endl;
+	}
+		
+}
+
 void update_console(MessageHandler& mh, const string& command, const string& input, state& s) {
 	if (command == "list") {
 		if (input == "") {	
@@ -426,14 +490,33 @@ void update_console(MessageHandler& mh, const string& command, const string& inp
 		} else {			
 			/* */	
 		}
-	} else if (command=="create_art") {
+	} else if (command == "read") {
+		if (input == "") {
+			/* */
+		} else {
+			console_get_article(mh, s, input);
+		}
+	} else if (command == "manual") {
+		cout << "\"list\" 			- List the newsgroups" << endl;
+		cout << "\"list <>\" 		- List the articles of newsgroup <> (= id/name)" << endl;
+		
+		cout << "\"create newsgroup\" 	- Create a newsgroup. A prompt will appear." << endl;
+		cout << "\"create article\" 	- Create an article in the active newsgroup. Prompts will appear." << endl;
+		
+		cout << "\"delete newsgroup\" 	- Delete a newsgroup. A prompt will appear, enter id/name." << endl;
+		cout << "\"create article\" 	- Delete an article in the active newsgroup. A prompt will appear, enter id/name." << endl;
+		
+		cout << "\"read <>\" 		- Read the article <> (=id/name) of the active newsgroup." << endl;
+		
+		cout << "\"manual\"		- Procuce this manual" << endl;
+		cout << "\"exit\" 			- Exit" << endl;
 		
 	} else if (command=="exit") {
 		cout << "<exiting>" << endl;
 		exit(1);
 	} else {
 		cout << "<command not valid>" << endl;
-		cout << "These are the valid commands:\n-" << endl;
+		cout << "type \"manual\" to see the available commands" << endl;
 		/* */
 	}
 	cout << "news";
