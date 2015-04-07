@@ -72,11 +72,11 @@ int main(int argc, char* argv[]) {
 		db_path = DEFAULT_PATH;
 	}
 
-	//disk_database db(db_path);
-	inmemory_database db;
+	disk_database db(db_path);
+	//inmemory_database db;
 	//test_inmemory_db(db);
 	
-	enter_testdata(db);
+	//enter_testdata(db);
 	//test1(db);
 
 	

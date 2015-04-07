@@ -319,12 +319,17 @@ string count(const string path) {
 string read_article(const string path) {
 	ifstream infile(path);
 	
+	int lines = 0;
 	string result, tmp;
 	while (getline(infile,tmp)) {
 		result += tmp;
-		result += '\n';
+		result += "\n";
+		lines++;
+	}
+	
+	if (lines < 2) {
+		result.resize(result.length()-1);
 	}
 
-	result.resize(result.length()-1);
 	return result;
 }

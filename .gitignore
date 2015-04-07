@@ -5,5 +5,4 @@
 
 clientserver/test/database/
 
-clientserver/test/disk_server
-clientserver/test/myclient
+clientserver/test/myclient*
