@@ -1,6 +1,7 @@
 #include "messagehandler.h"
 #include "protocol.h"
 #include "connection.h"
+#include "connectionclosedexception.h"
 
 using namespace std;
 
@@ -8,12 +9,14 @@ MessageHandler::MessageHandler(const shared_ptr<Connection>& conn) : connection(
 
 
 void MessageHandler::sendByte(unsigned char code) {
-	/* add some error handling magic here */
+	/* 	Connection::write() throws ConnectionClosedException. 
+		Will be passed along to Client/Server and handled. */
 	connection->write(code);
 }
 
 unsigned char MessageHandler::recvByte() {	
-	/* possibly add some error handling magic here */
+	/* 	Connection::read() throws ConnectionClosedException. 
+		Will be passed along to Client/Server and handled. */
 	unsigned char code = connection->read();
 	return code;
 }

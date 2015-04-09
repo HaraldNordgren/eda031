@@ -43,7 +43,7 @@ void console_list_articles(MessageHandler& mh, state& s, const unsigned id);
 void console_create_article(MessageHandler& mh, state& s);
 void console_delete_article(MessageHandler& mh, state& s);
 void console_get_article(MessageHandler& mh, state& s, const string& input);
-void update_console(MessageHandler& mh, const string& command, const string& input, state& s);
+void console_switch(MessageHandler& mh, const string& command, const string& input, state& s);
 
 
 
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 	while (getline(cin, s)) {
 		auto p = parse_cmdline(s);		
 		try {
-			update_console(mh, p.first, p.second, console_state);		
+			console_switch(mh, p.first, p.second, console_state);		
 		} catch (ConnectionClosedException&) {
 			cout << " no reply from server. Exiting." << endl;
 			exit(1);
@@ -463,7 +463,7 @@ void console_get_article(MessageHandler& mh, state& s, const string& input) {
 		
 }
 
-void update_console(MessageHandler& mh, const string& command, const string& input, state& s) {
+void console_switch(MessageHandler& mh, const string& command, const string& input, state& s) {
 	if (command == "list") {
 		if (input == "") {	
 			console_list_newsgroups(mh, s);			
