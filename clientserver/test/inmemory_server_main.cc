@@ -21,8 +21,8 @@ using namespace std;
 
 const string DEFAULT_PATH = "./database/";
 
-const bool debug_messages = true;	// Fult jag vet, ta gärna bort om det stör.
-void debug_msg(const string msg);	// -||-
+const bool debug_messages = false;	
+void debug_msg(const string msg);	
 
 void list_groups(MessageHandler& mh, database& db);
 void create_newsgroup(MessageHandler& mh, database& db);
@@ -32,7 +32,6 @@ void create_article(MessageHandler& mh, database& db);
 void delete_article(MessageHandler& mh, database& db);
 void get_article(MessageHandler& mh, database& db);
 
-void test_inmemory_db(database& db);
 void enter_testdata(database& db);
 void test1(database& db);
 
@@ -72,9 +71,7 @@ int main(int argc, char* argv[]) {
 		db_path = DEFAULT_PATH;
 	}
 
-	disk_database db(db_path);
-	//inmemory_database db;
-	//test_inmemory_db(db);
+	inmemory_database db;	
 	
 	//enter_testdata(db);
 	//test1(db);
@@ -293,38 +290,7 @@ void get_article(MessageHandler& mh, database& db) {
 }
 
 
-/* debugging */
-void test_inmemory_db(database& db) {
 
-	/* add newsgroup */
-	db.create_newsgroup(string("testgroup1"));
-	article art1;
-	art1.title = string("test title 1,1");
-	art1.author = string("test author 1,1");
-	art1.text = string("While this is a text, it is also not a text.");
-	
-	/* add article to newsgroup*/
-	db.create_article(1,art1);	
-	
-	unsigned grp_id = 1;	unsigned art_id = 1;
-	
-	/* check if it's there, if the indices are correct */
-	auto p1 = db.list_articles(grp_id);
-	for (auto m : p1.second) {
-		cout << "Article: grp_id, art_id = " << grp_id << ", " << m.first << "; title = "<< m.second << endl;
-	}
-	
-	/* delete article from newsgroup */
-	cout << "db.delete_article(" << grp_id << "," << art_id << ")" << endl;	
-	db.delete_article(grp_id,art_id);
-	
-	/* check if the article is still there */
-	auto p2 = db.list_articles(grp_id);
-	for (auto m : p2.second) {
-		cout << "Article: grp_id, art_id = " << grp_id << ", " << m.first << "; title = "<< m.second << endl;
-	}		
-
-}
 
 void enter_testdata(database& db) {
 	db.create_newsgroup("football");

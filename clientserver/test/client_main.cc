@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
 	}
 }
 
-/* ------------------------------- DATABASE COMMUNICATION FUNCTIONS ------------------------------- */
+/* ------------------------------- DATABASE COMMUNICATION FUNCTIONS (layer 2) ------------------------------- */
 
 vector<pair<unsigned, string>> listNewsgroups(MessageHandler& mh) {
 
@@ -280,7 +280,7 @@ bool isnumber(const string& s) {
 }
 
 
-/* ------------------------------- CONSOLE FUNCTIONS ------------------------------- */
+/* ------------------------------- CONSOLE FUNCTIONS (layer 1) ------------------------------- */
 
 void console_list_newsgroups(MessageHandler& mh, state& s, bool print=true) {
 	s.current_group = 0; // =no group
