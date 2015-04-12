@@ -1,0 +1,2 @@
+1 Kör "make" för att kompilera all kod.
+2 Kör "make install" för att  flytta körbara filer till mappen bin

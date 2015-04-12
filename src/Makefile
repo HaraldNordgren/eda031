@@ -4,8 +4,8 @@
 #
 # Define the compiler. g++ can be
 # changed to clang++.
-CXX = clang++-3.5
-CC  = clang++-3.5
+CXX = clang++
+CC  = clang++
 
 # Define preprocessor, compiler, and linker flags. Uncomment the # lines
 # if you use clang++ and wish to use libc++ instead of libstdc++.

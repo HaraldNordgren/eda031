@@ -14,7 +14,7 @@
 
 using namespace std;
 
-string DATABASE_ROOT	= "database/";
+string DATABASE_ROOT	= "../database/";
 const string COUNTER	= "counter";
 const string DELIMITER	= ":";
 
