@@ -3,6 +3,7 @@
 *.d
 *.a
 
-clientserver/test/database/
+bin/
 
+clientserver/test/database/
 clientserver/test/myclient*

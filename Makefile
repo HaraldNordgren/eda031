@@ -1,5 +1,5 @@
 SRC_FOLDER			= "src"
-EXECUTABLES			= "$(SRC_FOLDER)/executables"
+EXECUTABLES			= "$(SRC_FOLDER)/clientserver"
 BIN_FOLDER			= "bin"
 DATABASE_DEFAULT	= "database"
 
@@ -8,10 +8,12 @@ all:
 	cd $(EXECUTABLES); make
 
 install:
+	if [ -d $(BIN_FOLDER) ]; then rm $(BIN_FOLDER) -r; fi
 	mkdir $(BIN_FOLDER)
-	mv $(EXECUTABLES)/client_main $(BIN_FOLDER)/client_main
-	mv $(EXECUTABLES)/disk_server_main $(BIN_FOLDER)/disk_server_main
-	mv $(EXECUTABLES)/inmemory_server_main $(BIN_FOLDER)/inmemory_server_main
+	
+	mv $(EXECUTABLES)/client_main $(BIN_FOLDER)
+	mv $(EXECUTABLES)/disk_server_main $(BIN_FOLDER)
+	mv $(EXECUTABLES)/inmemory_server_main $(BIN_FOLDER)
 
 clean:
 	cd $(SRC_FOLDER); make clean
